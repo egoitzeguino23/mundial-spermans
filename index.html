@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="./favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiniela SPERMANS — Mundial 2026</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+  <link rel="stylesheet" href="style.css?v=champion-banner">
+</head>
+<body>
+
+  <header>
+    <span class="sperman-badge" title="Edición SPERMANS">SPERMANS · edición Mundial</span>
+    <h1>⚽ SPERMANS, tráyamelo: ¡el MUNDIAL 2026! ⚽</h1>
+    <p class="subtitle">La quiniela oficial de los colegas SPERMANS. ¿Cuál va a ser tu "ojito con…"?</p>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="predict">&#128202; Apostar</button>
+    <button class="tab-btn" data-tab="leaderboard">&#127942; Ranking</button>
+    <a href="https://www.fifa.com/es/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=ES&wtw-filter=ALL">
+      <button class="tab-btn">📅 Calendario</button>
+    </a>
+  </nav>
+
+  <!-- ==================== PREDICTION TAB ==================== -->
+  <div id="tab-predict" class="tab-content active">
+    <div class="container">
+
+      <!-- Toolbar -->
+      <div class="toolbar-btns">
+        <button class="toolbar-btn" id="btnReset">&#128260; Limpiar todo (sin llorar luego, eh)</button>
+        <button class="toolbar-btn" id="btnScoringHelp">❓ Cómo se puntúa</button>
+      </div>
+
+      <!-- Group Stage -->
+      <h2 class="section-title">&#127758; Fase de grupos</h2>
+      <p class="note-text">Arrastra las selecciones (o usa las flechas ▲▼) para colocar cada grupo en el orden que crees que va a quedar. <strong>1º y 2º pasan directos</strong>; <strong>3º ent[...]
+      <div class="groups-grid" id="groupsGrid"></div>
+
+      <!-- Quiniela 1X2 -->
+      <h2 class="section-title">&#127919; Quiniela 1X2 (punto extra)</h2>
+      <p class="note-text">3 partidos sorteados de la fase de grupos (¡y uno de <strong>España</strong> de regalo!). Marca <strong>1</strong> si gana el equipo local, <strong>X</strong> si crees[...]
+      <div id="quiniela1x2Panel"></div>
+
+      <!-- Best thirds -->
+      <h2 class="section-title">🥉 Mejores terceros</h2>
+      <p class="note-text">Cuando hayas ordenado los grupos, aquí aparecerán los 12 terceros. Arrástralos para decidir cuáles son los <strong>8 que clasifican</strong> a dieciseisavos (los 4 últi[...]
+      <div id="bestThirdsPanel"></div>
+
+      <!-- Knockout Bracket -->
+      <h2 class="section-title">🥊 Knockouts</h2>
+      <p class="note-text">Es de cajón cómo funciona. Si te hacen falta instrucciones mereces palmar.</p>
+      <div class="bracket-wrapper">
+        <div class="bracket" id="bracketContainer"></div>
+      </div>
+
+      <!-- Awards -->
+      <div class="awards-section">
+        <h3>&#127942; Premios del Mundial</h3>
+
+        <div class="award-row">
+          <label>🥇 Máximo Goleador (5pt):</label>
+          <select id="awardTopScorer" class="award-select" data-award-kind="player"></select>
+        </div>
+
+        <div class="award-row">
+          <label>🎯 Máximo Asistente (3pt):</label>
+          <select id="awardTopAssister" class="award-select" data-award-kind="player"></select>
+        </div>
+
+        <div class="award-row">
+          <label>🧤 Guante de Oro (3pt):</label>
+          <select id="awardGoldenGlove" class="award-select" data-award-kind="player"></select>
+        </div>
+
+        <div class="award-row">
+          <label>⚽ Equipo Más Goleador (3pt):</label>
+          <select id="awardTopScoringTeam" class="award-select" data-award-kind="team"></select>
+        </div>
+
+        <div class="award-row">
+          <label>🥅 Equipo Más Goleado (3pt):</label>
+          <select id="awardMostConcededTeam" class="award-select" data-award-kind="team"></select>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-section">
+        <button class="submit-btn" id="btnSubmit">&#9917; Sentar cátedra (SPERMANS style)</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== LEADERBOARD TAB ==================== -->
+    <div id="tab-leaderboard" class="tab-content">
+    <div class="container">
+      <h2 class="section-title">&#127942; Ranking SPERMANS</h2>
+      <p class="note-text">
+        Haz click en un compi para confirmar el sesgo que ya tienes de que no tiene ni idea de fútbol.
+      </p>
+
+      <div id="leaderboardContent">
+        <p class="note-text" style="margin-top:20px;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prediction-modal-overlay" id="predictionModal" style="display:none;">
+    <div class="prediction-modal">
+      <button class="prediction-modal-close" id="closePredictionModal">×</button>
+      <div id="predictionViewer"></div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <span class="ball-spinner">&#9917;</span>
+    <p id="loadingText">Cargando...</p>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
+
+  <!-- Confetti container -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <script src="third_place_table.js?v=group-order-drag-and-new-awards"></script>
+  <script src="results.js?v=simulacion-realista-grupos"></script>
+  <script>
+    window.WC2026_CONFIG = {
+      leaderboardCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTL5M4CKQeNs_x585VhjfUX322KWLOwtE9zQsDTXLuGJpXMN-xwKH4V_XQ1KYhfAOB2VepHcA3qPVOV/pub?gid=1501238060&single=true&output=csv', // URL CSV publicada de Google Sheets
+      formId: '1FAIpQLSdn3rO6N7PldGvxjI167yyYusTArXOQruOHcqNSyekAWS0EvQ', // ID del Google Form (entre /d/e/ y /viewform)
+      entryId: 'entry.472090608', // entry.xxxxx del campo donde se guarda el JSON
+      submissionDeadlineIso: '' // opcional: ej "2026-06-10T20:00:00+02:00"
+    };
+  </script>
+  <script src="app.js?v=euskadi-easter-egg"></script>
+  <div class="name-modal-overlay" id="nameModal" style="display:none;">
+  <div class="name-modal">
+    <h3>Así que sentando cátedra, ¿eh?</h3>
+    <p>¿Quién cojones eres? (nombre + apellidos)</p>
+
+    <input
+      type="text"
+      id="playerNameInput"
+      class="name-modal-input"
+      placeholder="Ej. Mikel Garcia Bartolome"
+      maxlength="40"
+    >
+
+    <div class="name-modal-actions">
+      <button type="button" class="toolbar-btn" id="cancelNameSubmit">Paso, ya lo hago luego</button>
+      <button type="button" class="submit-btn" id="confirmNameSubmit">Apostar fuerte (No hay vuelta atras)</button>
+    </div>
+  </div>
+</div>
+<footer class="sperman-footer">
+  Hecho con cariño (y demasiado café) para la peña de <strong>SPERMANS</strong>. Que gane el mejor… o el que más suerte tenga, vaya.
+</footer>
+</body>
+</html>
