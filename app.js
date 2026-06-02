@@ -11,6 +11,7 @@ const LEADERBOARD_CSV_URL = APP_CONFIG.leaderboardCsvUrl || '';
 const FORM_ID = APP_CONFIG.formId || '';
 const ENTRY_ID = APP_CONFIG.entryId || '';
 const SUBMISSION_DEADLINE_ISO = APP_CONFIG.submissionDeadlineIso || '';
+const PREDICTIONS_REVEAL_ISO = APP_CONFIG.predictionsRevealIso || SUBMISSION_DEADLINE_ISO || '';
 
 const puntuaciones = {
   grupos: {
@@ -3797,11 +3798,22 @@ function parseCSV(csv) {
 
 function renderLeaderboardList(submissions) {
   const container = document.getElementById('leaderboardContent');
+  const detailsUnlocked = canViewPredictionDetails();
 
   const list = document.createElement('div');
   list.className = 'leaderboard-list';
 
   container.innerHTML = '';
+
+  if (!detailsUnlocked) {
+    const lockNote = document.createElement('p');
+    lockNote.className = 'note-text';
+    lockNote.style.marginTop = '8px';
+    lockNote.style.marginBottom = '14px';
+    lockNote.textContent = getPredictionDetailsLockMessage();
+    container.appendChild(lockNote);
+  }
+
   container.appendChild(list);
 
   if (!submissions.length) {
@@ -3826,7 +3838,15 @@ function renderLeaderboardList(submissions) {
       <span class="leaderboard-score">${entry.score} pts</span>
     `;
 
+    if (!detailsUnlocked) {
+      btn.title = 'Detalle bloqueado hasta que empiece el Mundial';
+    }
+
     btn.addEventListener('click', () => {
+      if (!detailsUnlocked) {
+        showToast(getPredictionDetailsLockMessage(), true);
+        return;
+      }
       openPredictionModal(entry);
     });
 
@@ -3835,6 +3855,11 @@ function renderLeaderboardList(submissions) {
 }
 
 function openPredictionModal(entry) {
+  if (!canViewPredictionDetails()) {
+    showToast(getPredictionDetailsLockMessage(), true);
+    return;
+  }
+
   const modal = document.getElementById('predictionModal');
   const viewer = document.getElementById('predictionViewer');
 
@@ -3850,6 +3875,36 @@ function closePredictionModal() {
 
   modal.style.display = 'none';
   viewer.innerHTML = '';
+}
+
+function getPredictionsRevealDate() {
+  if (!PREDICTIONS_REVEAL_ISO) return null;
+  const reveal = new Date(PREDICTIONS_REVEAL_ISO);
+  return Number.isNaN(reveal.getTime()) ? null : reveal;
+}
+
+function canViewPredictionDetails() {
+  const reveal = getPredictionsRevealDate();
+  if (!reveal) return false;
+  return new Date() >= reveal;
+}
+
+function formatDateTimeEs(date) {
+  return date.toLocaleString('es-ES', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function getPredictionDetailsLockMessage() {
+  const reveal = getPredictionsRevealDate();
+  if (!reveal) {
+    return 'Las apuestas están ocultas hasta que empiece el Mundial. Define WC2026_CONFIG.predictionsRevealIso para indicar cuándo abrir el detalle.';
+  }
+  return 'Las apuestas están bloqueadas hasta que empiece el Mundial (' + formatDateTimeEs(reveal) + '). Nadie puede cotillear todavía.';
 }
 
 
