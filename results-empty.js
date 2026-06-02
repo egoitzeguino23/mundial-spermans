@@ -13,7 +13,7 @@
      Por eso este archivo no tiene "groupMatches".
    - "thirdPlace" es la lista de los 8 mejores terceros que
      pasan a dieciseisavos, en el orden 1º-8º.
-   - "awards" tiene 5 categorías nuevas y divertidas.
+  - "awards" tiene 6 categorías nuevas y divertidas.
    ============================================================ */
 
 const RESULTS = {
@@ -71,13 +71,14 @@ const RESULTS = {
   runnerUp: "",
   thirdPlaceWinner: "",
 
-  // 5 categorías divertidas — todas son una sola elección por categoría.
-  // "topScorer", "topAssister" y "goldenGlove" esperan el NOMBRE de un jugador
+  // 6 categorías divertidas — todas son una sola elección por categoría.
+  // "topScorer", "mvpTournament", "topAssister" y "goldenGlove" esperan el NOMBRE de un jugador
   //   (de los listados en AWARD_PLAYERS dentro de app.js).
   // "topScoringTeam" y "mostConcededTeam" esperan el NOMBRE de una selección
   //   (tal y como aparece en los grupos).
   awards: {
     topScorer: "",         // 🥇 Máximo Goleador (jugador)
+    mvpTournament: "",     // 🌟 MVP del Torneo (jugador)
     topAssister: "",       // 🎯 Máximo Asistente (jugador)
     goldenGlove: "",       // 🧤 Guante de Oro / Portero menos goleado (jugador)
     topScoringTeam: "",    // ⚽ Equipo Más Goleador

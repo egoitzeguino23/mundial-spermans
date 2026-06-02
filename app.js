@@ -24,16 +24,23 @@ const puntuaciones = {
   },
   quiniela1x2: 1,
   eliminatorias: {
-    round32: 0,
-    round16: 5,
-    quarterfinals: 5,
-    semifinals: 10,
-    finalist: 20,
-    champion: 30,
-    thirdPlace: 15
-  },
+  round32: 0,
+  round16: 5,
+  quarterfinals: 5,
+  semifinals: 10,
+  finalist: 20,
+  champion: 30,
+  thirdPlace: 15,
+  bonusCuadro: {      
+    round16: 2,
+    quarterfinals: 3,
+    semifinals: 5,
+    final: 8
+  }
+},
   premios: {
     topScorer: 5,
+    mvpTournament: 5,
     topAssister: 3,
     goldenGlove: 3,
     topScoringTeam: 3,
@@ -41,11 +48,12 @@ const puntuaciones = {
   }
 };
 
-// Configuración declarativa de los 5 premios.
+// Configuración declarativa de los premios.
 // `kind` indica si el valor seleccionable es un jugador (de AWARD_PLAYERS)
 // o un equipo (de cualquier selección participante en el Mundial).
 const AWARDS_CONFIG = [
   { key: 'topScorer',      selectId: 'awardTopScorer',      kind: 'player', emoji: '🥇', label: 'Máximo Goleador',          points: puntuaciones.premios.topScorer },
+  { key: 'mvpTournament',  selectId: 'awardMvpTournament',  kind: 'player', emoji: '🌟', label: 'MVP del Torneo',           points: puntuaciones.premios.mvpTournament },
   { key: 'topAssister',    selectId: 'awardTopAssister',    kind: 'player', emoji: '🎯', label: 'Máximo Asistente',         points: puntuaciones.premios.topAssister },
   { key: 'goldenGlove',    selectId: 'awardGoldenGlove',    kind: 'player', emoji: '🧤', label: 'Guante de Oro (portero)',  points: puntuaciones.premios.goldenGlove },
   { key: 'topScoringTeam',    selectId: 'awardTopScoringTeam',    kind: 'team',   emoji: '⚽', label: 'Equipo Más Goleador',      points: puntuaciones.premios.topScoringTeam },
@@ -3557,12 +3565,37 @@ function getKnockoutProgressPointsForTeam(team, roundName, realStageTeams, predi
   return points;
 }
 
+function getKnockoutResultsByMatchNum(payload) {
+  const byMatch = {};
+  if (!payload) return byMatch;
+
+  if (payload.knockoutResults && typeof payload.knockoutResults === 'object') {
+    Object.entries(payload.knockoutResults).forEach(([matchNum, winner]) => {
+      if (winner) byMatch[matchNum] = winner;
+    });
+  }
+
+  const matchesByRound = payload.knockout?.matches;
+  if (matchesByRound && typeof matchesByRound === 'object') {
+    Object.values(matchesByRound).forEach(roundMatches => {
+      if (!Array.isArray(roundMatches)) return;
+      roundMatches.forEach(item => {
+        if (!item || item.match == null || !item.winner) return;
+        byMatch[item.match] = item.winner;
+      });
+    });
+  }
+
+  return byMatch;
+}
+
 function getKnockoutScoreBreakdown(prediction, results = RESULTS) {
   const predStages = getKnockoutStageTeamSets(prediction);
   const realStages = getKnockoutStageTeamSets(results);
 
   let score = 0;
 
+  // Puntos base: el equipo llegó a esa ronda, por donde sea
   ['round32', 'round16', 'quarterfinals', 'semifinals', 'finalist'].forEach(stage => {
     const points = KNOCKOUT_SCORING[stage] || 0;
     predStages[stage].forEach(team => {
@@ -3577,6 +3610,26 @@ function getKnockoutScoreBreakdown(prediction, results = RESULTS) {
   predStages.thirdPlace.forEach(team => {
     if (realStages.thirdPlace.has(team)) score += KNOCKOUT_SCORING.thirdPlace;
   });
+
+  // Bonus cuadro exacto: acertaste el ganador del partido concreto
+  const predResults = getKnockoutResultsByMatchNum(prediction);
+  const realResults = getKnockoutResultsByMatchNum(results);
+
+  ['round16', 'quarterfinals', 'semifinals'].forEach(round => {
+    (KO_TREE[round] || []).forEach(match => {
+      const predWinner = predResults[match.num];
+      const realWinner = realResults[match.num];
+      if (predWinner && realWinner && predWinner === realWinner) {
+        score += KNOCKOUT_SCORING.bonusCuadro?.[round] || 0;
+      }
+    });
+  });
+
+  // Bonus final y tercer puesto
+  const finalNum = KO_TREE.final?.[0]?.num;
+  if (finalNum && predResults[finalNum] && predResults[finalNum] === realResults[finalNum]) {
+    score += KNOCKOUT_SCORING.bonusCuadro?.final || 0;
+  }
 
   return score;
 }
