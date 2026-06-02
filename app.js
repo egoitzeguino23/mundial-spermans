@@ -3866,9 +3866,12 @@ function openScoringHelpModal() {
         <div class="scoring-help-card">
           <h4>🌍 Fase de grupos</h4>
           <ul>
-            <li>Acertar la posición exacta de cada equipo dentro de su grupo (1º, 2º, 3º o 4º): <strong>${puntuaciones.grupos.posicion.primero} pts por equipo acertado</strong></li>
+            <li>Acertar 1º de cada grupo: <strong>${puntuaciones.grupos.posicion.primero} pts</strong> por equipo</li>
+            <li>Acertar 2º de cada grupo: <strong>${puntuaciones.grupos.posicion.segundo} pts</strong> por equipo</li>
+            <li>Acertar 3º de cada grupo: <strong>${puntuaciones.grupos.posicion.tercero} pts</strong> por equipo</li>
+            <li>Acertar 4º de cada grupo: <strong>${puntuaciones.grupos.posicion.cuarto} pts</strong> por equipo</li>
             <li>Cada mejor tercero (top 8) acertado: <strong>${puntuaciones.grupos.mejorTercero} pts</strong></li>
-            <li>Quiniela 1X2 (3 partidos): <strong>${puntuaciones.quiniela1x2} pt por acierto</strong></li>
+            <li>Quiniela 1X2 (3 partidos): <strong>${puntuaciones.quiniela1x2} pt</strong> por acierto</li>
           </ul>
           <p class="scoring-help-small">Solo se acierta arrastrando los equipos en el orden correcto. No hay marcadores exactos.</p>
         </div>
@@ -3876,12 +3879,17 @@ function openScoringHelpModal() {
         <div class="scoring-help-card">
           <h4>🥊 Eliminatorias</h4>
           <ul>
+            <li>Equipo en dieciseisavos: <strong>${puntuaciones.eliminatorias.round32} pts</strong> (sí, aquí no suma)</li>
             <li>Equipo en octavos: <strong>${puntuaciones.eliminatorias.round16} pts</strong></li>
             <li>Equipo en cuartos: <strong>${puntuaciones.eliminatorias.quarterfinals} pts</strong></li>
             <li>Equipo en semifinales: <strong>${puntuaciones.eliminatorias.semifinals} pts</strong></li>
             <li>Finalista: <strong>${puntuaciones.eliminatorias.finalist} pts</strong></li>
             <li>Campeón: <strong>+${puntuaciones.eliminatorias.champion} pts</strong></li>
             <li>Tercer puesto: <strong>${puntuaciones.eliminatorias.thirdPlace} pts</strong></li>
+            <li>Bonus por acertar ganador exacto del cruce en octavos: <strong>+${puntuaciones.eliminatorias.bonusCuadro.round16} pts</strong> por partido</li>
+            <li>Bonus por acertar ganador exacto del cruce en cuartos: <strong>+${puntuaciones.eliminatorias.bonusCuadro.quarterfinals} pts</strong> por partido</li>
+            <li>Bonus por acertar ganador exacto del cruce en semifinales: <strong>+${puntuaciones.eliminatorias.bonusCuadro.semifinals} pts</strong> por partido</li>
+            <li>Bonus por acertar ganador exacto de la final: <strong>+${puntuaciones.eliminatorias.bonusCuadro.final} pts</strong></li>
           </ul>
         </div>
 
@@ -3894,7 +3902,7 @@ function openScoringHelpModal() {
       </div>
 
       <p class="scoring-help-note">
-        La puntuación total de eliminatorias sí suma todas las decisiones acertadas. En el bracket del ranking, cada cajita muestra solo los puntos de esa ronda concreta; en la final puede sumar finalista + campeón si has clavado ambas cosas.
+        Puntuamos por fases alcanzadas y además por cruces exactos (bonus). Es decir: puedes sumar por "llegó a cuartos" aunque no hayas clavado el camino exacto; si además clavas el partido concreto, cae bonus extra. En la final puede sumar finalista + campeón + bonus de final. Sí, aquí somos más meticulosos que un árbitro revisando el VAR en cámara lenta.
       </p>
 
 
