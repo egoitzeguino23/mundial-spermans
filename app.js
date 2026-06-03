@@ -1803,6 +1803,7 @@ async function loadData() {
   try {
     const resp = await fetch(DATA_SRC+'/worldcup.json');
     const data = await resp.json();
+    window.worldCupData = data;
 
     // Extract group compositions from group-stage matches (early exit at 4 teams/group)
     TEAMS_BY_GROUP = {};
@@ -4953,11 +4954,35 @@ async function init() {
       document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
     });
   });
+  document.querySelectorAll('.world-btn').forEach(btn => {
+
+  btn.addEventListener('click', () => {
+
+    document
+      .querySelectorAll('.world-btn')
+      .forEach(b => b.classList.remove('active'));
+
+    document
+      .querySelectorAll('.world-content')
+      .forEach(c => c.classList.remove('active'));
+
+    btn.classList.add('active');
+
+    document
+      .getElementById(
+        'world-' + btn.dataset.worldTab
+      )
+      .classList.add('active');
+
+  });
+
+});
 
   document.getElementById('btnReset').addEventListener('click', () => {
     resetState();
     computeMatchTeams();
     renderAll();
+    renderWorldCenter();
   });
   const btnScoringHelp = document.getElementById('btnScoringHelp');
   if (btnScoringHelp) {
@@ -4989,6 +5014,7 @@ async function init() {
   fillAwards(state.awards);
   computeMatchTeams();
   renderAll();
+  renderWorldCenter();
 
   document.querySelectorAll(AWARD_SELECT_IDS.map(id => '#' + id).join(',')).forEach(el => {
     el.addEventListener('input', saveLocalPredictionSoon);
@@ -5010,3 +5036,772 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+/* ==========================================================
+   WORLD CUP CENTER
+   ========================================================== */
+
+function renderWorldCenter() {
+
+  if (!window.worldCupData) return;
+
+  renderWorldHeader();
+
+  renderTodayMatches();
+  renderUpcomingMatches();
+  renderLatestResults();
+  renderGroupStandings();
+  renderKnockoutBracket();
+
+}
+
+function getAllWorldCupMatches() {
+
+  if (!window.worldCupData?.matches) return [];
+
+  return window.worldCupData.matches.map(match => ({
+
+    ...match,
+
+    team1: translateTeamName(match.team1),
+    team2: translateTeamName(match.team2)
+
+  }));
+
+}
+function flag(team) {
+
+  const code = FLAG_CODE[team];
+
+  if (!code) return '';
+
+  return `<span class="fi fi-${code}"></span>`;
+}
+
+function formatDateES(dateStr) {
+
+  const d = new Date(dateStr);
+
+  return d.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long'
+  });
+
+}
+function renderTodayMatches() {
+
+  const container =
+    document.getElementById('todayMatches');
+
+  if (!container) return;
+
+  const today =
+    new Date().toISOString().split('T')[0];
+
+  const matches =
+    getAllWorldCupMatches()
+      .filter(m => m.date === today);
+
+  if (!matches.length) {
+
+    container.innerHTML = `
+      <div class="match-card">
+        😢 Hoy no hay partidos
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = matches.map(match => `
+
+    <div class="match-card">
+
+      <div class="match-teams">
+
+        <div>
+          ${flag(match.team1)}
+          ${match.team1}
+        </div>
+
+        <div class="match-vs">
+          VS
+        </div>
+
+        <div>
+          ${flag(match.team2)}
+          ${match.team2}
+        </div>
+
+      </div>
+
+      <div class="match-info">
+        🕐 ${match.time || ''}
+      </div>
+
+    </div>
+
+  `).join('');
+
+}
+
+function renderUpcomingMatches() {
+
+  const container =
+    document.getElementById('upcomingMatches');
+
+  if (!container) return;
+
+  const today =
+    new Date().toISOString().split('T')[0];
+
+  const matches =
+    getAllWorldCupMatches()
+      .filter(m => m.date > today)
+      .sort((a,b) =>
+        (a.date+a.time)
+        .localeCompare(b.date+b.time)
+      )
+      .slice(0,20);
+
+  let html = '';
+  let currentDate = '';
+
+  matches.forEach(match => {
+
+    if (match.date !== currentDate) {
+
+      currentDate = match.date;
+
+      html += `
+        <div class="match-day">
+          📅 ${formatDateES(match.date)}
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="match-card">
+
+        <div class="match-teams">
+
+          <div>
+            ${flag(match.team1)}
+            ${match.team1}
+          </div>
+
+          <div class="match-vs">
+            VS
+          </div>
+
+          <div>
+            ${flag(match.team2)}
+            ${match.team2}
+          </div>
+
+        </div>
+
+        <div class="match-info">
+          🕐 ${match.time || ''}
+        </div>
+
+      </div>
+    `;
+
+  });
+
+  container.innerHTML = html;
+
+}
+
+function renderLatestResults() {
+
+  const container =
+    document.getElementById('latestResults');
+
+  if (!container) return;
+
+  const played =
+    getAllWorldCupMatches()
+      .filter(m =>
+        m.score &&
+        m.score.ft
+      )
+      .reverse()
+      .slice(0,20);
+
+  if (!played.length) {
+
+    container.innerHTML = `
+      <div class="result-card">
+        Todavía no hay resultados.
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = played.map(match => `
+
+    <div class="result-card">
+
+      <div class="result-team">
+        ${flag(match.team1)}
+        ${match.team1}
+      </div>
+
+      <div class="result-score">
+        ${match.score.ft[0]}
+        -
+        ${match.score.ft[1]}
+      </div>
+
+      <div class="result-team">
+        ${flag(match.team2)}
+        ${match.team2}
+      </div>
+
+    </div>
+
+  `).join('');
+
+}
+function renderWorldHeader() {
+
+  const container =
+    document.getElementById('worldHeader');
+
+  if (!container) return;
+
+  const matches =
+    getAllWorldCupMatches();
+
+  const totalMatches =
+    matches.length;
+
+  const playedMatches =
+    matches.filter(m =>
+      m.score &&
+      m.score.ft
+    ).length;
+
+  const nextMatch =
+    matches
+      .filter(m =>
+        !m.score ||
+        !m.score.ft
+      )
+      .sort((a,b) =>
+        (a.date+a.time)
+        .localeCompare(b.date+b.time)
+      )[0];
+
+  let nextMatchHtml = '';
+
+  if (nextMatch) {
+
+    nextMatchHtml = `
+      <div class="world-next-match">
+
+        <strong>
+          ${flag(nextMatch.team1)}
+          ${nextMatch.team1}
+        </strong>
+
+        vs
+
+        <strong>
+          ${flag(nextMatch.team2)}
+          ${nextMatch.team2}
+        </strong>
+
+        <div class="world-next-date">
+          📅 ${nextMatch.date}
+          🕐 ${nextMatch.time || ''}
+        </div>
+
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+
+    <div class="world-header-card">
+
+      <div class="world-title">
+        ⚽ Mundial 2026
+      </div>
+
+      <div class="world-progress">
+
+        Partidos jugados
+
+        <strong>
+          ${playedMatches}
+          /
+          ${totalMatches}
+        </strong>
+
+      </div>
+
+      ${nextMatchHtml}
+
+    </div>
+
+  `;
+
+}
+function calculateGroupStandings(group) {
+
+  const table = {};
+
+  TEAMS_BY_GROUP[group].forEach(team => {
+
+    table[team.name] = {
+      team: team.name,
+      pj: 0,
+      g: 0,
+      e: 0,
+      p: 0,
+      gf: 0,
+      gc: 0,
+      dg: 0,
+      pts: 0
+    };
+
+  });
+
+  const matches = getAllWorldCupMatches().filter(m =>
+    m.group === `Group ${group}` &&
+    m.score &&
+    m.score.ft
+  );
+
+  matches.forEach(match => {
+
+    const home = table[match.team1];
+    const away = table[match.team2];
+
+    if (!home || !away) return;
+
+    const goalsHome = Number(match.score.ft[0]);
+    const goalsAway = Number(match.score.ft[1]);
+
+    home.pj++;
+    away.pj++;
+
+    home.gf += goalsHome;
+    home.gc += goalsAway;
+
+    away.gf += goalsAway;
+    away.gc += goalsHome;
+
+    if (goalsHome > goalsAway) {
+
+      home.g++;
+      away.p++;
+
+      home.pts += 3;
+
+    } else if (goalsAway > goalsHome) {
+
+      away.g++;
+      home.p++;
+
+      away.pts += 3;
+
+    } else {
+
+      home.e++;
+      away.e++;
+
+      home.pts += 1;
+      away.pts += 1;
+
+    }
+
+  });
+
+  Object.values(table).forEach(team => {
+    team.dg = team.gf - team.gc;
+  });
+
+  return Object.values(table).sort((a,b) => {
+
+    if (b.pts !== a.pts)
+      return b.pts - a.pts;
+
+    if (b.dg !== a.dg)
+      return b.dg - a.dg;
+
+    return b.gf - a.gf;
+
+  });
+
+}
+function getBestThirdTeams() {
+
+  const thirds = [];
+
+  GROUP_NAMES.forEach(group => {
+
+    const standings =
+      calculateGroupStandings(group);
+
+    if (standings[2]) {
+
+      thirds.push({
+        group,
+        ...standings[2]
+      });
+
+    }
+
+  });
+
+  return thirds
+    .sort((a,b) => {
+
+      if (b.pts !== a.pts)
+        return b.pts - a.pts;
+
+      if (b.dg !== a.dg)
+        return b.dg - a.dg;
+
+      return b.gf - a.gf;
+
+    })
+    .slice(0,8)
+    .map(t => t.team);
+
+}
+function renderGroupStandings() {
+
+  const container =
+    document.getElementById('groupStandings');
+
+  if (!container) return;
+
+  let html = '';
+
+  const bestThirdTeams =
+  getBestThirdTeams();
+
+  GROUP_NAMES.forEach(group => {
+
+    const teams =
+      calculateGroupStandings(group);
+
+    html += `
+
+      <div class="standings-group">
+
+        <button
+          class="group-toggle"
+          onclick="toggleGroupStandings('${group}')"
+        >
+
+          <span>🏆 Grupo ${group}</span>
+
+          <span id="arrow-${group}">
+            ▼
+          </span>
+
+        </button>
+
+        <div
+          id="group-content-${group}"
+          class="group-content"
+        >
+
+          <table class="standings-table">
+
+            <thead>
+              <tr>
+
+                <th>#</th>
+                <th>Equipo</th>
+
+                <th>PJ</th>
+
+                <th>G</th>
+                <th>E</th>
+                <th>P</th>
+
+                <th>GF</th>
+                <th>GC</th>
+                <th>DG</th>
+
+                <th>PTS</th>
+
+              </tr>
+            </thead>
+
+            <tbody>
+    `;
+
+    teams.forEach((team, index) => {
+
+      let rowClass = 'eliminated';
+
+      if (index === 0 || index === 1) {
+
+        rowClass = 'qualified';
+
+      }
+      else if (
+        index === 2 &&
+        bestThirdTeams.includes(team.team)
+      ) {
+
+        rowClass = 'third-place';
+
+      }
+
+      html += `
+
+        <tr class="${rowClass}">
+
+          <td>${index + 1}</td>
+
+          <td>
+            ${flag(team.team)}
+            ${team.team}
+          </td>
+
+          <td>${team.pj}</td>
+
+          <td>${team.g}</td>
+          <td>${team.e}</td>
+          <td>${team.p}</td>
+
+          <td>${team.gf}</td>
+          <td>${team.gc}</td>
+          <td>${team.dg}</td>
+
+          <td>
+            <strong>${team.pts}</strong>
+          </td>
+
+        </tr>
+
+      `;
+
+    });
+
+    html += `
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  container.innerHTML = html;
+
+  const firstGroup =
+    document.getElementById('group-content-A');
+
+  if (firstGroup) {
+
+    firstGroup.classList.add('open');
+
+    const arrow =
+      document.getElementById('arrow-A');
+
+    if (arrow) {
+      arrow.textContent = '▲';
+    }
+
+  }
+
+}
+function toggleGroupStandings(group) {
+
+  const content =
+    document.getElementById(
+      `group-content-${group}`
+    );
+
+  const arrow =
+    document.getElementById(
+      `arrow-${group}`
+    );
+
+  const opened =
+    content.classList.contains('open');
+
+  if (opened) {
+
+    content.classList.remove('open');
+
+    arrow.textContent = '▼';
+
+  } else {
+
+    content.classList.add('open');
+
+    arrow.textContent = '▲';
+
+  }
+
+}
+function renderKnockoutBracket() {
+
+  const container =
+    document.getElementById('knockoutBracket');
+
+  if (!container) return;
+
+  let html = '';
+
+  html += renderKnockoutRound(
+    '🥊 Dieciseisavos',
+    KO_TREE.round32
+  );
+
+  html += renderKnockoutRound(
+    '⚔️ Octavos',
+    KO_TREE.round16
+  );
+
+  html += renderKnockoutRound(
+    '🏆 Cuartos',
+    KO_TREE.quarterfinals
+  );
+
+  html += renderKnockoutRound(
+    '🔥 Semifinales',
+    KO_TREE.semifinals
+  );
+
+  html += renderKnockoutRound(
+    '🥉 Tercer Puesto',
+    KO_TREE.thirdPlace
+  );
+
+  html += renderKnockoutRound(
+    '👑 Final',
+    KO_TREE.final
+  );
+
+  container.innerHTML = html;
+
+}
+function renderKnockoutRound(title, matches) {
+
+  let html = `
+
+    <div class="knockout-section">
+
+      <h2>${title}</h2>
+
+  `;
+
+  matches.forEach(match => {
+
+    html += `
+
+      <div class="knockout-match">
+
+        <div class="match-number">
+          Partido ${match.num}
+        </div>
+
+        <div class="knockout-team">
+
+          ${flag(getQualifiedTeam(match.slot1))}
+          ${getQualifiedTeam(match.slot1)}
+
+        </div>
+
+        <div class="knockout-vs">
+          VS
+        </div>
+
+        <div class="knockout-team">
+
+          ${flag(getQualifiedTeam(match.slot2))}
+          ${getQualifiedTeam(match.slot2)}
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  html += `
+    </div>
+  `;
+
+  return html;
+
+}
+function getSlotLabel(slot) {
+
+  if (!slot) return '?';
+
+  if (slot.type === 'winner')
+    return `1º Grupo ${slot.group}`;
+
+  if (slot.type === 'runner_up')
+    return `2º Grupo ${slot.group}`;
+
+  if (slot.type === 'third_place')
+    return `3º Clasificado`;
+
+  if (slot.type === 'winner_of')
+    return `Ganador ${slot.matchNum}`;
+
+  if (slot.type === 'loser_of')
+    return `Perdedor ${slot.matchNum}`;
+
+  return '?';
+
+}
+function getQualifiedTeam(slot) {
+
+  if (!slot) return '?';
+
+  if (slot.type === 'winner') {
+
+    const standings =
+      calculateGroupStandings(slot.group);
+
+    return standings[0]?.team || `1º Grupo ${slot.group}`;
+
+  }
+
+  if (slot.type === 'runner_up') {
+
+    const standings =
+      calculateGroupStandings(slot.group);
+
+    return standings[1]?.team || `2º Grupo ${slot.group}`;
+
+  }
+
+  if (slot.type === 'third_place') {
+
+    return 'Mejor tercero';
+
+  }
+
+  if (slot.type === 'winner_of') {
+    return `🏆 Ganador ${slot.matchNum}`;
+  }
+
+  if (slot.type === 'loser_of') {
+    return `❌ Perdedor ${slot.matchNum}`;
+  }
+
+  return '?';
+
+}

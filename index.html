@@ -19,6 +19,9 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="predict">&#128202; Apostar</button>
     <button class="tab-btn" data-tab="leaderboard">&#127942; Ranking</button>
+    <button class="tab-btn" data-tab="world">
+    🌍 Mundial en Directo
+    </button>
     <a href="https://www.fifa.com/es/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=ES&wtw-filter=ALL">
       <button class="tab-btn">📅 Calendario</button>
     </a>
@@ -112,6 +115,78 @@
       </div>
     </div>
   </div>
+
+<!-- ==================== WORLD CUP CENTER ==================== -->
+<div id="tab-world" class="tab-content">
+
+  <div class="world-subnav">
+
+    <button class="world-btn active"
+            data-world-tab="today">
+      📅 Hoy
+    </button>
+
+    <button class="world-btn"
+            data-world-tab="upcoming">
+      🔥 Próximos
+    </button>
+
+    <button class="world-btn"
+            data-world-tab="results">
+      ✅ Resultados
+    </button>
+
+    <button class="world-btn"
+            data-world-tab="standings">
+      🏆 Clasificación
+    </button>
+    <button class="world-btn"
+            data-world-tab="knockout">
+      🥊 Eliminatorias
+    </button>
+
+  </div>
+
+  <div class="container">
+
+    <div id="world-today" class="world-content active">
+      <div id="worldHeader"></div>
+      <div id="todayMatches"></div>
+    </div>
+
+    <div id="world-upcoming" class="world-content">
+      <div id="upcomingMatches"></div>
+    </div>
+
+    <div id="world-results" class="world-content">
+      <div id="latestResults"></div>
+    </div>
+
+    <div id="world-standings" class="world-content">
+      <div class="standings-legend">
+
+        <span class="legend-qualified">
+          🟢 Clasifica
+        </span>
+
+        <span class="legend-third">
+          🟡 Mejor tercero
+        </span>
+
+        <span class="legend-eliminated">
+          🔴 Eliminado
+        </span>
+
+      </div>
+      <div id="groupStandings"></div>
+    </div>
+    <div id="world-knockout" class="world-content">
+      <div id="knockoutBracket"></div>
+    </div>
+
+  </div>
+
+</div>
 
   <div class="prediction-modal-overlay" id="predictionModal" style="display:none;">
     <div class="prediction-modal">
