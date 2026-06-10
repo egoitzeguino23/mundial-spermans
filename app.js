@@ -3733,6 +3733,7 @@ async function loadLeaderboard() {
   });
 
   submissions.sort((a, b) => b.score - a.score);
+  assignPenalties(submissions);
   renderLeaderboardList(submissions);
 }
 
@@ -3796,7 +3797,32 @@ function parseCSV(csv) {
 
   return rows;
 }
+// ---- Penalizaciones ----
+// 1º paga 0€, 2º 5€, ... 10º 45€. Empates: media entre posiciones implicadas.
+const PENALTY_PER_POSITION = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45];
 
+function assignPenalties(submissions) {
+  const n = submissions.length;
+  let i = 0;
+  while (i < n) {
+    let j = i;
+    while (j < n && submissions[j].score === submissions[i].score) j++;
+
+    let totalPenalty = 0;
+    for (let k = i; k < j; k++) {
+      totalPenalty += PENALTY_PER_POSITION[k] ?? PENALTY_PER_POSITION[PENALTY_PER_POSITION.length - 1];
+    }
+    const sharedPenalty = totalPenalty / (j - i);
+
+    for (let k = i; k < j; k++) {
+      submissions[k].rank    = i + 1;
+      submissions[k].rankEnd = j;
+      submissions[k].penalty = sharedPenalty;
+      submissions[k].isTied  = j - i > 1;
+    }
+    i = j;
+  }
+}
 function renderLeaderboardList(submissions) {
   const container = document.getElementById('leaderboardContent');
   const detailsUnlocked = canViewPredictionDetails();
@@ -3816,6 +3842,11 @@ function renderLeaderboardList(submissions) {
   }
 
   container.appendChild(list);
+  const legend = document.createElement('details');
+  legend.className = 'penalty-legend';
+  legend.innerHTML = `
+  `;
+  container.appendChild(legend);
 
   if (!submissions.length) {
     const empty = document.createElement('p');
@@ -3826,17 +3857,27 @@ function renderLeaderboardList(submissions) {
     return;
   }
 
-  submissions.forEach((entry, index) => {
+  submissions.forEach((entry) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'leaderboard-entry';
 
     const playerName = escapeHtml(entry.name);
+    const rankLabel  = entry.isTied ? `${entry.rank}º–${entry.rankEnd}º` : `#${entry.rank}`;
+    const penaltyFmt = entry.penalty % 1 === 0
+      ? `${entry.penalty} €`
+      : `${entry.penalty.toFixed(1)} €`;
+    const penaltyClass = entry.penalty === 0 ? 'penalty-zero'
+      : entry.penalty >= 35 ? 'penalty-high' : 'penalty-mid';
 
     btn.innerHTML = `
-      <span class="leaderboard-rank">#${index + 1}</span>
-      <span class="leaderboard-name"><span>${playerName}</span></span>
+      <span class="leaderboard-rank">${rankLabel}</span>
+      <span class="leaderboard-name">
+        <span>${playerName}</span>
+        ${entry.isTied ? '<span class="leaderboard-tied">empate</span>' : ''}
+      </span>
       <span class="leaderboard-score">${entry.score} pts</span>
+      <span class="leaderboard-penalty ${penaltyClass}">${penaltyFmt}</span>
     `;
 
     if (!detailsUnlocked) {
@@ -3967,6 +4008,30 @@ function openScoringHelpModal() {
         <div class="scoring-example-text">
           Cada cuadradito verde del leaderboard representa los puntos que te ha dado esa decisión concreta:
           acertar el orden de un grupo, que una selección llegue a 16avos, semis, final, etc.
+        </div>
+      </div>
+    </div>
+  `;
+}
+function openPenaltyRulesModal() {
+  const modal = document.getElementById('predictionModal');
+  const viewer = document.getElementById('predictionViewer');
+  modal.style.display = 'flex';
+  viewer.innerHTML = `
+    <div class="scoring-help">
+      <h3>🍽️ Normas y penalizaciones</h3>
+      <div class="scoring-help-card">
+        <ul>
+          <li>🏆 El que más acierte <strong>paga 0 €</strong>. El último invita casi él solo.</li>
+          <li>🍽️ El dinero va a una <strong>cena de grupo</strong>.</li>
+          <li>🤝 En caso de <strong>empate</strong>, los empatados pagan la media de sus posiciones.</li>
+        </ul>
+        <br>
+        <div class="penalty-legend-table">
+          ${PENALTY_PER_POSITION.map((p, i) => `
+            <span class="penalty-legend-pos">${i === 0 ? '🥇' : `${i + 1}º`}</span>
+            <span class="penalty-legend-amount">${p} €</span>
+          `).join('')}
         </div>
       </div>
     </div>
@@ -4988,6 +5053,10 @@ async function init() {
   if (btnScoringHelp) {
     btnScoringHelp.addEventListener('click', openScoringHelpModal);
   }
+  const btnPenaltyRules = document.getElementById('btnPenaltyRules');
+  if (btnPenaltyRules) {
+    btnPenaltyRules.addEventListener('click', openPenaltyRulesModal);
+  }
   document.getElementById('btnSubmit').addEventListener('click', submitPrediction);
   document.getElementById('confirmNameSubmit').addEventListener('click', confirmSubmitPrediction);
   document.getElementById('cancelNameSubmit').addEventListener('click', closeNameModal);
@@ -5057,6 +5126,7 @@ function renderWorldCenter() {
 function getAllWorldCupMatches() {
 
   if (!window.worldCupData?.matches) return [];
+  console.log(worldCupData.matches[0]);
 
   return window.worldCupData.matches.map(match => ({
 
