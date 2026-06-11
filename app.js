@@ -4635,6 +4635,7 @@ function renderKnockoutBracket(reviewState, titleText, options = {}) {
   return wrapper;
 }
 
+
 function renderReviewKnockout(prediction) {
   const container = document.getElementById('reviewKnockout');
   container.className = 'review-knockout-click-section';
@@ -4747,7 +4748,8 @@ function renderReviewKnockout(prediction) {
     getSlotPoints: getBracketSlotPoints,
     onMatchClick: showKnockoutMatchPopover
   });
-
+console.log(predictedBracket);
+console.log(typeof predictedBracket);
   pane.appendChild(predictedBracket);
   container.appendChild(pane);
 }
@@ -5126,7 +5128,6 @@ function renderWorldCenter() {
 function getAllWorldCupMatches() {
 
   if (!window.worldCupData?.matches) return [];
-  console.log(worldCupData.matches[0]);
 
   return window.worldCupData.matches.map(match => ({
 
@@ -5719,48 +5720,6 @@ function toggleGroupStandings(group) {
     arrow.textContent = '▲';
 
   }
-
-}
-function renderKnockoutBracket() {
-
-  const container =
-    document.getElementById('knockoutBracket');
-
-  if (!container) return;
-
-  let html = '';
-
-  html += renderKnockoutRound(
-    '🥊 Dieciseisavos',
-    KO_TREE.round32
-  );
-
-  html += renderKnockoutRound(
-    '⚔️ Octavos',
-    KO_TREE.round16
-  );
-
-  html += renderKnockoutRound(
-    '🏆 Cuartos',
-    KO_TREE.quarterfinals
-  );
-
-  html += renderKnockoutRound(
-    '🔥 Semifinales',
-    KO_TREE.semifinals
-  );
-
-  html += renderKnockoutRound(
-    '🥉 Tercer Puesto',
-    KO_TREE.thirdPlace
-  );
-
-  html += renderKnockoutRound(
-    '👑 Final',
-    KO_TREE.final
-  );
-
-  container.innerHTML = html;
 
 }
 function renderKnockoutRound(title, matches) {
