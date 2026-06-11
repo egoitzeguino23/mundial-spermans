@@ -5158,6 +5158,25 @@ function formatDateES(dateStr) {
   });
 
 }
+function formatTimeToSpain(timeStr) {
+  if (!timeStr) return '';
+
+  // Parsear "13:00 UTC-6" → time="13:00", offset=-6
+  const match = timeStr.match(/^(\d{2}):(\d{2})\s*UTC([+-]\d+)$/);
+  if (!match) return timeStr; // si no encaja, devolver tal cual
+
+  const hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const offsetHours = parseInt(match[3]);
+
+  // España en verano (Mundial junio-julio 2026) = UTC+2
+  const spainOffset = 2;
+
+  const utcHours = hours - offsetHours;
+  const spainHours = (utcHours + spainOffset + 24) % 24;
+
+  return `${String(spainHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
 function renderTodayMatches() {
 
   const container =
@@ -5206,7 +5225,8 @@ function renderTodayMatches() {
       </div>
 
       <div class="match-info">
-        🕐 ${match.time || ''}
+        🕐 ${match.time ? formatTimeToSpain(match.time): ''}
+        ${match.ground ? `📍 ${match.ground}` : ''}
       </div>
 
     </div>
@@ -5272,7 +5292,8 @@ function renderUpcomingMatches() {
         </div>
 
         <div class="match-info">
-          🕐 ${match.time || ''}
+          🕐 ${match.time ? formatTimeToSpain(match.time): ''}
+          ${match.ground ? `📍 ${match.ground}` : ''}
         </div>
 
       </div>
@@ -5387,7 +5408,8 @@ function renderWorldHeader() {
 
         <div class="world-next-date">
           📅 ${nextMatch.date}
-          🕐 ${nextMatch.time || ''}
+          ${nextMatch.time ? '🕐 ' + formatTimeToSpain(nextMatch.time) : ''}
+          ${nextMatch.ground ? `📍 ${nextMatch.ground}` : ''}
         </div>
 
       </div>
