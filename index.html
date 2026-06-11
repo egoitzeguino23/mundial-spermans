@@ -152,6 +152,10 @@
 
     <div id="world-today" class="world-content active">
       <div id="worldHeader"></div>
+      <button onclick="document.getElementById('watchModal').style.display='flex'"
+        style="background:#e74c3c; color:#fff; border:none; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; cursor:pointer; width:100%; margin:12px 0;">
+        📺 ¿Dónde ver el Mundial?
+      </button>
       <div id="todayMatches"></div>
     </div>
 
@@ -237,6 +241,71 @@
       <button type="button" class="toolbar-btn" id="cancelNameSubmit">Paso, ya lo hago luego,soy gei</button>
       <button type="button" class="submit-btn" id="confirmNameSubmit">Apostar fuerte (No hay vuelta atras)</button>
     </div>
+  </div>
+</div>
+<div id="watchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1a1a2e; border-radius:16px; padding:32px; max-width:420px; width:90%; position:relative; border:1px solid #333;">
+    
+    <button onclick="document.getElementById('watchModal').style.display='none'"
+      style="position:absolute; top:12px; right:16px; background:none; border:none; color:#aaa; font-size:22px; cursor:pointer;">✕</button>
+
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:40px;">🐀</div>
+      <h2 style="color:#fff; margin:8px 0 4px;">¿Dónde ver el Mundial?</h2>
+      <p style="color:#aaa; font-size:14px; margin:0;">
+        Ya que sois unas <strong style="color:#e74c3c;">ratas de alcantarilla</strong> y no queréis soltar ni un euro,<br>
+        aquí os dejo las opciones... de menos a más dignas 😂
+      </p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+
+      <a href="https://www.rtve.es/play/videos/directo/" target="_blank"
+        style="display:flex; align-items:center; gap:12px; background:#16213e; border:1px solid #444; border-radius:10px; padding:14px 16px; text-decoration:none; color:#fff;">
+        <span style="font-size:24px;">📺</span>
+        <div>
+          <div style="font-weight:600;">RTVE Play</div>
+          <div style="font-size:12px; color:#aaa;">Gratis y legal. Sois unos suertudos.</div>
+        </div>
+        <span style="margin-left:auto; color:#aaa;">→</span>
+      </a>
+
+      <a href="https://www.dazn.com/es-ES/welcome" target="_blank"
+        style="display:flex; align-items:center; gap:12px; background:#16213e; border:1px solid #f39c12; border-radius:10px; padding:14px 16px; text-decoration:none; color:#fff;">
+        <span style="font-size:24px;">💳</span>
+        <div>
+          <div style="font-weight:600;">DAZN <span style="font-size:11px; background:#f39c12; color:#000; border-radius:4px; padding:1px 6px; margin-left:4px;">DE PAGO</span></div>
+          <div style="font-size:12px; color:#aaa;">La opción honrada. Por si os da vergüenza.</div>
+        </div>
+        <span style="margin-left:auto; color:#aaa;">→</span>
+      </a>
+
+      <a href="https://ax.kedaiaksesorikeretanearme.my/" target="_blank"
+        style="display:flex; align-items:center; gap:12px; background:#16213e; border:1px solid #444; border-radius:10px; padding:14px 16px; text-decoration:none; color:#fff;">
+        <span style="font-size:24px;">🏴‍☠️</span>
+        <div>
+          <div style="font-weight:600;">Opción Pirata #1</div>
+          <div style="font-size:12px; color:#aaa;">No preguntéis de dónde sale esto.</div>
+        </div>
+        <span style="margin-left:auto; color:#aaa;">→</span>
+      </a>
+
+      <a href="https://tiroalpaloof.net/" target="_blank"
+        style="display:flex; align-items:center; gap:12px; background:#16213e; border:1px solid #444; border-radius:10px; padding:14px 16px; text-decoration:none; color:#fff;">
+        <span style="font-size:24px;">🎯</span>
+        <div>
+          <div style="font-weight:600;">Opción Pirata #2</div>
+          <div style="font-size:12px; color:#aaa;">Tiro al paloof... lo que sea que signifique eso.</div>
+        </div>
+        <span style="margin-left:auto; color:#aaa;">→</span>
+      </a>
+
+    </div>
+
+    <p style="text-align:center; color:#555; font-size:11px; margin-top:20px; margin-bottom:0;">
+      ⚠️ Ante cualquier virus, Egoitz no se hace responsable.
+    </p>
+
   </div>
 </div>
 <footer class="sperman-footer">
