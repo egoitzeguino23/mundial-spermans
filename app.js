@@ -33,6 +33,7 @@ const puntuaciones = {
   champion: 30,
   thirdPlace: 15,
   bonusCuadro: {      
+    round32: 1,
     round16: 2,
     quarterfinals: 3,
     semifinals: 5,
@@ -3539,7 +3540,7 @@ function getKnockoutStageTeamSets(payload) {
   };
 }
 
-function getKnockoutProgressPointsForTeam(team, roundName, realStageTeams, predictedState) {
+function getKnockoutProgressPointsForTeam(team, roundName, matchNum, realStageTeams, predictedState) {
   if (!team || !roundName || !realStageTeams) return 0;
 
   const stageByRound = {
@@ -3555,6 +3556,12 @@ function getKnockoutProgressPointsForTeam(team, roundName, realStageTeams, predi
   if (!stage) return 0;
 
   let points = realStageTeams[stage]?.has(team) ? (KNOCKOUT_SCORING[stage] || 0) : 0;
+
+  const predictedWinner = matchNum ? predictedState?.knockoutResults?.[matchNum] : null;
+  const realWinner = matchNum ? getKnockoutResultsByMatchNum(RESULTS)[matchNum] : null;
+  if (predictedWinner && realWinner && predictedWinner === realWinner && predictedWinner === team) {
+    points += KNOCKOUT_SCORING.bonusCuadro?.[roundName] || 0;
+  }
 
   if (roundName === 'final') {
     const finalNum = KO_TREE.final?.[0]?.num;
@@ -3617,7 +3624,7 @@ function getKnockoutScoreBreakdown(prediction, results = RESULTS) {
   const predResults = getKnockoutResultsByMatchNum(prediction);
   const realResults = getKnockoutResultsByMatchNum(results);
 
-  ['round16', 'quarterfinals', 'semifinals'].forEach(round => {
+  ['round32', 'round16', 'quarterfinals', 'semifinals'].forEach(round => {
     (KO_TREE[round] || []).forEach(match => {
       const predWinner = predResults[match.num];
       const realWinner = realResults[match.num];
@@ -3983,6 +3990,7 @@ function openScoringHelpModal() {
             <li>Finalista: <strong>${puntuaciones.eliminatorias.finalist} pts</strong></li>
             <li>Campeón: <strong>+${puntuaciones.eliminatorias.champion} pts</strong></li>
             <li>Tercer puesto: <strong>${puntuaciones.eliminatorias.thirdPlace} pts</strong></li>
+            <li>Bonus por acertar ganador exacto del cruce en dieciseisavos: <strong>+${puntuaciones.eliminatorias.bonusCuadro.round32} pt</strong> por partido</li>
             <li>Bonus por acertar ganador exacto del cruce en octavos: <strong>+${puntuaciones.eliminatorias.bonusCuadro.round16} pts</strong> por partido</li>
             <li>Bonus por acertar ganador exacto del cruce en cuartos: <strong>+${puntuaciones.eliminatorias.bonusCuadro.quarterfinals} pts</strong> por partido</li>
             <li>Bonus por acertar ganador exacto del cruce en semifinales: <strong>+${puntuaciones.eliminatorias.bonusCuadro.semifinals} pts</strong> por partido</li>
@@ -4735,8 +4743,8 @@ function renderReviewKnockout(prediction) {
 
   const realStageTeams = getKnockoutStageTeamSets(RESULTS);
 
-  function getBracketSlotPoints(team, roundName) {
-    return getKnockoutProgressPointsForTeam(team, roundName, realStageTeams, predictedState);
+  function getBracketSlotPoints(team, roundName, matchNum) {
+    return getKnockoutProgressPointsForTeam(team, roundName, matchNum, realStageTeams, predictedState);
   }
 
   const pane = document.createElement('div');

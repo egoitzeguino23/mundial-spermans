@@ -249,6 +249,169 @@ function buildLiveThirdPlace() {
   return thirds.slice(0, 8).map(item => item.team);
 }
 
+function uniqueTeamList(items) {
+  return items.filter((team, index, array) => team && array.indexOf(team) === index);
+}
+
+const KNOCKOUT_ROUND_BY_LABEL = {
+  'round of 32': 'round32',
+  'round of 16': 'round16',
+  'quarter-finals': 'quarterfinals',
+  'quarter finals': 'quarterfinals',
+  'quarterfinals': 'quarterfinals',
+  'semi-finals': 'semifinals',
+  'semi finals': 'semifinals',
+  semifinals: 'semifinals',
+  'match for third place': 'thirdPlace',
+  'third-place match': 'thirdPlace',
+  'third place': 'thirdPlace',
+  final: 'final'
+};
+
+const KNOCKOUT_ROUND_RANGES = [
+  { start: 73, end: 88, key: 'round32' },
+  { start: 89, end: 96, key: 'round16' },
+  { start: 97, end: 100, key: 'quarterfinals' },
+  { start: 101, end: 102, key: 'semifinals' },
+  { start: 103, end: 103, key: 'thirdPlace' },
+  { start: 104, end: 104, key: 'final' }
+];
+
+function getKnockoutRoundKey(match) {
+  const matchNum = Number(match?.num);
+  if (Number.isFinite(matchNum)) {
+    const range = KNOCKOUT_ROUND_RANGES.find(item => matchNum >= item.start && matchNum <= item.end);
+    if (range) return range.key;
+  }
+
+  const round = String(match?.round || '').trim().toLowerCase();
+  return KNOCKOUT_ROUND_BY_LABEL[round] || null;
+}
+
+function isKnockoutPlaceholderTeam(team) {
+  return /^(?:[WL]\d+|[1-4][A-L])$/i.test(team);
+}
+
+function getConcreteKnockoutTeamName(name) {
+  const normalized = normalizeTeamName(name);
+  return normalized && !isKnockoutPlaceholderTeam(normalized) ? normalized : '';
+}
+
+function getWinnerSideFromScore(score) {
+  if (!score || typeof score !== 'object') return null;
+
+  const explicitWinner = score.winner ?? score.result ?? score.outcome;
+  if (explicitWinner === 1 || explicitWinner === '1' || explicitWinner === 'team1' || explicitWinner === 'home') return 1;
+  if (explicitWinner === 2 || explicitWinner === '2' || explicitWinner === 'team2' || explicitWinner === 'away') return 2;
+
+  const decisiveFields = ['ft', 'et', 'aet', 'ot', 'pso', 'pen', 'pens', 'penalties'];
+  for (const field of decisiveFields) {
+    const parsed = parseFinalScore(score[field]);
+    if (!parsed) continue;
+    if (parsed[0] > parsed[1]) return 1;
+    if (parsed[1] > parsed[0]) return 2;
+  }
+
+  return null;
+}
+
+function getKnockoutWinner(match, team1, team2) {
+  const explicitWinner = normalizeTeamName(match?.winner || match?.score?.winner);
+  if (explicitWinner && (explicitWinner === team1 || explicitWinner === team2)) return explicitWinner;
+
+  const winnerSide = getWinnerSideFromScore(match?.score);
+  if (winnerSide === 1) return team1;
+  if (winnerSide === 2) return team2;
+  return '';
+}
+
+function buildLiveKnockoutData() {
+  const matches = Array.isArray(globalThis.worldCupData?.matches)
+    ? globalThis.worldCupData.matches
+    : [];
+
+  const rounds = {
+    round32: [],
+    round16: [],
+    quarterfinals: [],
+    semifinals: [],
+    thirdPlace: [],
+    final: []
+  };
+
+  const winners = {
+    round32: [],
+    round16: [],
+    quarterfinals: [],
+    semifinals: []
+  };
+
+  matches.forEach(match => {
+    const roundKey = getKnockoutRoundKey(match);
+    if (!roundKey) return;
+
+    const team1 = getConcreteKnockoutTeamName(match.team1);
+    const team2 = getConcreteKnockoutTeamName(match.team2);
+    const winner = getKnockoutWinner(match, team1, team2);
+    const matchNum = Number(match?.num);
+
+    rounds[roundKey].push({
+      match: Number.isFinite(matchNum) ? matchNum : match.num,
+      team1,
+      team2,
+      winner
+    });
+
+    if (winner && winners[roundKey] && !winners[roundKey].includes(winner)) {
+      winners[roundKey].push(winner);
+    }
+  });
+
+  Object.values(rounds).forEach(roundMatches => {
+    roundMatches.sort((a, b) => Number(a.match) - Number(b.match));
+  });
+
+  const semifinalists = uniqueTeamList(
+    rounds.semifinals.some(match => match.team1 || match.team2)
+      ? rounds.semifinals.flatMap(match => [match.team1, match.team2])
+      : winners.quarterfinals
+  );
+
+  const finalMatch = rounds.final[0] || null;
+  const finalists = finalMatch && (finalMatch.team1 || finalMatch.team2)
+    ? uniqueTeamList([finalMatch.team1, finalMatch.team2])
+    : [...winners.semifinals];
+  const champion = finalMatch?.winner || '';
+  const runnerUp = champion && finalists.length >= 2
+    ? (finalists.find(team => team !== champion) || '')
+    : '';
+
+  const thirdPlaceMatch = rounds.thirdPlace[0] || null;
+  const thirdPlaceWinner = thirdPlaceMatch?.winner || '';
+
+  return {
+    knockout: {
+      round32: winners.round32,
+      round16: winners.round16,
+      quarterfinals: winners.quarterfinals,
+      semifinals: winners.semifinals,
+      semifinalists,
+      champion,
+      runnerUp,
+      finalists,
+      thirdPlaceWinner,
+      final: champion,
+      thirdPlace: thirdPlaceWinner,
+      matches: rounds
+    },
+    semifinalists,
+    finalists,
+    champion,
+    runnerUp,
+    thirdPlaceWinner
+  };
+}
+
 const STATIC_RESULTS = {
   // groups y thirdPlace son dinamicos (Proxy), pero se mantienen aqui para
   // conservar el shape del objeto esperado por el resto de la app.
@@ -274,7 +437,9 @@ const STATIC_RESULTS = {
     thirdPlace: '',
 
     matches: {
-      round32: [],
+      round32: [
+        { match: 73, team1: 'Sudáfrica', team2: 'Canadá', winner: 'Canadá' }
+      ],
       round16: [],
       quarterfinals: [],
       semifinals: [],
@@ -305,6 +470,12 @@ const RESULTS = new Proxy(STATIC_RESULTS, {
   get(target, prop, receiver) {
     if (prop === 'groups') return buildLiveGroupData().groups;
     if (prop === 'thirdPlace') return buildLiveThirdPlace();
+    if (prop === 'knockout') return buildLiveKnockoutData().knockout;
+    if (prop === 'semifinalists') return buildLiveKnockoutData().semifinalists;
+    if (prop === 'finalists') return buildLiveKnockoutData().finalists;
+    if (prop === 'champion') return buildLiveKnockoutData().champion;
+    if (prop === 'runnerUp') return buildLiveKnockoutData().runnerUp;
+    if (prop === 'thirdPlaceWinner') return buildLiveKnockoutData().thirdPlaceWinner;
     return Reflect.get(target, prop, receiver);
   }
 });
