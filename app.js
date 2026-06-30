@@ -34,7 +34,7 @@ const puntuaciones = {
   thirdPlace: 15,
   bonusCuadro: {      
     round32: 1,
-    round16: 2,
+    round16: 1,
     quarterfinals: 3,
     semifinals: 5,
     final: 8
@@ -3503,8 +3503,10 @@ function getTeamsFromReviewMatches(reviewState, treeArr) {
   const teams = [];
   (treeArr || []).forEach(match => {
     const mt = reviewState.matchTeams?.[match.num] || {};
-    if (mt.team1) teams.push(mt.team1);
-    if (mt.team2) teams.push(mt.team2);
+    const winner = reviewState.knockoutResults?.[match.num];
+    if (winner && (mt.team1 === winner || mt.team2 === winner)) {
+      teams.push(winner);
+    }
   });
   return uniqueTeamList(teams);
 }
@@ -3523,21 +3525,58 @@ function getKnockoutStageTeamSets(payload) {
   }
 
   const reviewState = buildKnockoutReviewState(payload);
+
+  const resultsByMatch = reviewState.knockoutResults || {};
+
+  const winners = (from, to) => {
+    const list = Object.entries(resultsByMatch)
+      .filter(([matchNum]) => {
+        const n = Number(matchNum);
+        return n >= from && n <= to;
+      })
+      .map(([, winner]) => winner)
+      .filter(Boolean);
+
+
+    return new Set(list);
+  };
+
   const finalNum = KO_TREE.final?.[0]?.num;
   const thirdNum = KO_TREE.thirdPlace?.[0]?.num;
-  const finalMatch = finalNum ? (reviewState.matchTeams?.[finalNum] || {}) : {};
-  const thirdWinner = thirdNum ? reviewState.knockoutResults?.[thirdNum] : getThirdPlaceWinnerFromPayload(payload);
-  const champion = finalNum ? reviewState.knockoutResults?.[finalNum] : getChampionFromPayload(payload);
 
-  return {
-    round32: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round32)),
-    round16: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round16)),
-    quarterfinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.quarterfinals)),
-    semifinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.semifinals)),
-    finalist: new Set(uniqueTeamList([finalMatch.team1, finalMatch.team2, ...getFinalistsFromPayload(payload)])),
+  const champion =
+    finalNum
+      ? resultsByMatch[finalNum] || getChampionFromPayload(payload)
+      : getChampionFromPayload(payload);
+
+  const thirdWinner =
+    thirdNum
+      ? resultsByMatch[thirdNum] || getThirdPlaceWinnerFromPayload(payload)
+      : getThirdPlaceWinnerFromPayload(payload);
+
+  const finalMatch = finalNum
+    ? (reviewState.matchTeams?.[finalNum] || {})
+    : {};
+
+  const stages = {
+    round32: winners(73, 88),
+    round16: winners(73, 88),
+    quarterfinals: winners(89, 96),
+    semifinals: winners(97, 100),
+
+    finalist: new Set(
+      [
+        finalMatch.team1,
+        finalMatch.team2,
+        ...getFinalistsFromPayload(payload)
+      ].filter(Boolean)
+    ),
+
     champion: new Set(champion ? [champion] : []),
     thirdPlace: new Set(thirdWinner ? [thirdWinner] : [])
   };
+
+  return stages;
 }
 
 function getKnockoutProgressPointsForTeam(team, roundName, matchNum, realStageTeams, predictedState) {
@@ -4756,8 +4795,6 @@ function renderReviewKnockout(prediction) {
     getSlotPoints: getBracketSlotPoints,
     onMatchClick: showKnockoutMatchPopover
   });
-console.log(predictedBracket);
-console.log(typeof predictedBracket);
   pane.appendChild(predictedBracket);
   container.appendChild(pane);
 }

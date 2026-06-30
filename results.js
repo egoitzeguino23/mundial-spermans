@@ -304,7 +304,18 @@ function getWinnerSideFromScore(score) {
   if (explicitWinner === 1 || explicitWinner === '1' || explicitWinner === 'team1' || explicitWinner === 'home') return 1;
   if (explicitWinner === 2 || explicitWinner === '2' || explicitWinner === 'team2' || explicitWinner === 'away') return 2;
 
-  const decisiveFields = ['ft', 'et', 'aet', 'ot', 'pso', 'pen', 'pens', 'penalties'];
+  const decisiveFields = [
+  'ft',
+  'et',
+  'aet',
+  'ot',
+  'p',
+  'pso',
+  'pen',
+  'pens',
+  'penalties',
+  'pk'
+];
   for (const field of decisiveFields) {
     const parsed = parseFinalScore(score[field]);
     if (!parsed) continue;
@@ -420,7 +431,7 @@ const STATIC_RESULTS = {
 
   // Quiniela 1X2 - resultados reales de los 3 partidos fijos.
   // Las claves coinciden con [team1, team2].sort().join('__').
-  quiniela1x2: { 'Corea del Sur__México': '1', 'Escocia__Marruecos': '2' },
+  quiniela1x2: { 'Corea del Sur__México': '1', 'Escocia__Marruecos': '2', 'España__Uruguay': '2' },
 
   knockout: {
     round32: [],
