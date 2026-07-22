@@ -468,12 +468,12 @@ const STATIC_RESULTS = {
 
   // 6 categorias divertidas.
   awards: {
-    topScorer: '',
-    mvpTournament: '',
-    topAssister: '',
-    goldenGlove: '',
-    topScoringTeam: '',
-    mostConcededTeam: ''
+    topScorer: 'Kylian Mbappé',
+    mvpTournament: 'Rodri',
+    topAssister: 'Michael Olise',
+    goldenGlove: 'Unai Simón',
+    topScoringTeam: 'Inglaterra',
+    mostConcededTeam: 'Túnez'
   }
 };
 
